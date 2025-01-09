@@ -5,10 +5,19 @@ namespace Espo\ApiClient;
 
 class Header
 {
-    public function __construct(
-        private string $name,
-        private string $value
-    ) {}
+    /**
+     * @var string
+     */
+    private $name;
+    /**
+     * @var string
+     */
+    private $value;
+    public function __construct(string $name, string $value)
+    {
+        $this->name = $name;
+        $this->value = $value;
+    }
 
     public function getName(): string
     {

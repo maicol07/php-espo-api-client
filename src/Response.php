@@ -5,12 +5,29 @@ namespace Espo\ApiClient;
 
 class Response
 {
-    public function __construct(
-        private int $code,
-        private ?string $contentType,
-        private string $headersPart,
-        private string $bodyPart
-    ) {}
+    /**
+     * @var int
+     */
+    private $code;
+    /**
+     * @var string|null
+     */
+    private $contentType;
+    /**
+     * @var string
+     */
+    private $headersPart;
+    /**
+     * @var string
+     */
+    private $bodyPart;
+    public function __construct(int $code, ?string $contentType, string $headersPart, string $bodyPart)
+    {
+        $this->code = $code;
+        $this->contentType = $contentType;
+        $this->headersPart = $headersPart;
+        $this->bodyPart = $bodyPart;
+    }
 
     public function getCode(): int
     {
@@ -32,7 +49,10 @@ class Response
         return $this->contentType;
     }
 
-    public function getParsedBody(): mixed
+    /**
+     * @return mixed
+     */
+    public function getParsedBody()
     {
         if ($this->getContentType() === 'application/json') {
             return json_decode($this->getBodyPart());

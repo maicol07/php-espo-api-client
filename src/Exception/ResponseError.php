@@ -14,11 +14,16 @@ use Espo\ApiClient\Response;
  */
 class ResponseError extends Error
 {
+    /**
+     * @var Response
+     */
+    private $response;
     final public function __construct(
-        private Response $response,
+        Response $response,
         string $message = '',
         int $code = 0
     ) {
+        $this->response = $response;
         parent::__construct($message, $code);
     }
 

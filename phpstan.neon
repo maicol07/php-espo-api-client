@@ -5,3 +5,4 @@ parameters:
 	paths:
 		- src
 	reportUnmatchedIgnoredErrors: false
+	phpVersion: 70100

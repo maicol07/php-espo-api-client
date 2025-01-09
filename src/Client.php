@@ -3,42 +3,69 @@
 
 namespace Espo\ApiClient;
 
-use CurlHandle;
 use Espo\ApiClient\Exception\Error;
 use Espo\ApiClient\Exception\ResponseError;
 use InvalidArgumentException;
-use JsonException;
 use RuntimeException;
 use stdClass;
 
 class Client
 {
+    /**
+     * @var string
+     */
+    private $url;
+    /**
+     * @var ?int
+     */
+    private $port;
     public const METHOD_GET = 'GET';
     public const METHOD_POST = 'POST';
     public const METHOD_PUT = 'PUT';
     public const METHOD_DELETE = 'DELETE';
     public const METHOD_OPTIONS = 'OPTIONS';
 
-    private string $urlPath = '/api/v1/';
-    private ?string $username = null;
-    private ?string $password = null;
-    private ?string $apiKey = null;
-    private ?string $secretKey = null;
-    private ?CurlHandle $lastCh;
+    /**
+     * @var string
+     */
+    private $urlPath = '/api/v1/';
+    /**
+     * @var string|null
+     */
+    private $username;
+    /**
+     * @var string|null
+     */
+    private $password;
+    /**
+     * @var string|null
+     */
+    private $apiKey;
+    /**
+     * @var string|null
+     */
+    private $secretKey;
+    /**
+     * @var resource|null
+     */
+    private $lastCh;
 
     /**
      * @param string $url An EspoCRM site URL.
      * @param ?int $port A port.
      */
-    public function __construct(
-        private string $url,
-        private ?int $port = null
-    ) {}
+    public function __construct(string $url, ?int $port = null)
+    {
+        $this->url = $url;
+        $this->port = $port;
+    }
 
     /**
      * Set a username and password (Basic authentication). Not recommended way to authenticate.
+     * @param string|null $username
+     * @param string|null $password
      */
-    public function setUsernameAndPassword(?string $username, ?string $password): self
+    public function setUsernameAndPassword($username, $password): self
     {
         $this->username = $username;
         $this->password = $password;
@@ -48,8 +75,9 @@ class Client
 
     /**
      * Set an API key.
+     * @param string|null $apiKey
      */
-    public function setApiKey(?string $apiKey): self
+    public function setApiKey($apiKey): self
     {
         $this->apiKey = $apiKey;
 
@@ -58,8 +86,9 @@ class Client
 
     /**
      * Set a secret key (for HMAC authentication).
+     * @param string|null $secretKey
      */
-    public function setSecretKey(?string $secretKey): self
+    public function setSecretKey($secretKey): self
     {
         $this->secretKey = $secretKey;
 
@@ -71,17 +100,17 @@ class Client
      *
      * @param self::METHOD_* $method A method. 'GET', 'POST', 'PUT', 'DELETE'.
      * @param string $path A relative URL path. E.g. `Account/00000000000id`.
-     * @param array<int, mixed>|array<string, mixed>|stdClass|null $data Payload data.
+     * @param mixed $data Payload data.
      * @param Header[] $headers Headers.
      * @return Response A response (on success).
      * @throws Error
      * @throws ResponseError On error occurred on request.
      */
     public function request(
-        string $method,
-        string $path,
-        mixed $data = null,
-        array $headers = []
+        $method,
+        $path,
+        $data = null,
+        $headers = []
     ): Response {
 
         $method = strtoupper($method);
@@ -158,10 +187,8 @@ class Client
                     !$contentType ||
                     $contentType === 'application/json'
                 ) {
-                    try {
-                        $payload = json_encode($data, JSON_THROW_ON_ERROR);
-                    }
-                    catch (JsonException) {
+                    $payload = json_encode($data, 0);
+                    if ($payload === false) {
                         throw new InvalidArgumentException("Invalid JSON.");
                     }
 
@@ -205,12 +232,7 @@ class Client
         $responseCode = $this->getResponseHttpCode();
         $responseContentType = $this->getResponseContentType();
 
-        $response = new Response(
-            $responseCode ?? 0,
-            $responseContentType,
-            $parsedResponse['header'],
-            $parsedResponse['body'],
-        );
+        $response = new Response($responseCode ?? 0, $responseContentType, $parsedResponse['header'], $parsedResponse['body']);
 
         curl_close($ch);
 
@@ -263,7 +285,10 @@ class Client
         return $this->url . $this->urlPath . $action;
     }
 
-    private function getInfo(int $option): mixed
+    /**
+     * @return mixed
+     */
+    private function getInfo(int $option)
     {
         if (isset($this->lastCh)) {
             return curl_getinfo($this->lastCh, $option);
